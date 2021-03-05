@@ -17,7 +17,7 @@ namespace ImmersivePortals
             MODNAME = "ImmersivePortals",
             AUTHOR = "Nekres",
             GUID = AUTHOR + "_" + MODNAME,
-            VERSION = "0.2.5";
+            VERSION = "0.2.5.2";
 
         internal readonly ManualLogSource log;
         internal readonly Harmony harmony;
@@ -35,6 +35,7 @@ namespace ImmersivePortals
         public static ConfigEntry<int> nexusID;
 
         public ImmersivePortals() {
+            _lastTeleportTime = DateTime.Now;
             log = Logger;
             harmony = new Harmony(GUID);
             assembly = typeof(ImmersivePortals).Assembly;
@@ -45,8 +46,8 @@ namespace ImmersivePortals
         {
             context = this;
             enablePortalBlackScreen = Config.Bind("General", "EnablePortalBlackScreen", false, "Enables the black transition screen when teleporting to distant portals outside the loaded area.");
-            considerSceneLoadedSeconds = Config.Bind("General", "ConsiderAreaLoadedAfterSeconds", 4.5, "Indicates a threshold in seconds after which an area is considered substantially loaded so that the player can safely arrive and regain control.");
-            nexusID = Config.Bind("General", "NexusID", 268, "Nexus mod ID. Required for update checks.");
+            considerSceneLoadedSeconds = Config.Bind("General", "ConsiderAreaLoadedAfterSeconds", 3.75, "Indicates a threshold in seconds after which an area is considered substantially loaded so that the player can safely arrive and regain control.");
+            nexusID = Config.Bind("General", "NexusID", 268, "Nexus mod ID. Required for 'Nexus Update Check' (mod).");
             forceInstantiatePortalExit = Config.Bind("RiskArea", "ForceInstantiateExitPortal", false, "Enables instant travel for distant exit portals outside the active area. Collision logic may not be loaded on arrival. Enable at your own risk.");
             
         }

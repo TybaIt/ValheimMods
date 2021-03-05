@@ -332,6 +332,7 @@
   <ItemGroup>
     <Compile Include="Entities\PortalCamera.cs" />
     <Compile Include="ImmersivePortals.cs" />
+    <Compile Include="Patches\HudPatch.cs" />
     <Compile Include="Patches\PlayerPatch.cs" />
     <Compile Include="Patches\TeleportWorldPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

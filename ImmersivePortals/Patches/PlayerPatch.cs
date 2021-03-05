@@ -9,52 +9,39 @@ namespace ImmersivePortals.Patches
     [HarmonyPatch(typeof(Player))]
     public static class PlayerPatch
     {
-        private static bool _prev_m_teleporting;
-
-        [HarmonyPatch("IsTeleporting")]
-        [HarmonyPrefix]
-        public static bool DisableBlackScreen(bool __result)
-        {
-            return __result = ImmersivePortals.enablePortalBlackScreen.Value;
-        }
-
         [HarmonyPatch("CanMove")]
-        [HarmonyPrefix]
-        public static void PreAllowMoving(ref bool ___m_teleporting, ref float ___m_teleportTimer)
+        [HarmonyTranspiler]
+        public static IEnumerable<CodeInstruction> CanMoveEarly(IEnumerable<CodeInstruction> instructions)
         {
-            _prev_m_teleporting = ___m_teleporting;
-            if (___m_teleporting && ConsiderAreaLoaded())
-            {
-                ___m_teleporting = false;
-            }
-        }
-
-        [HarmonyPatch("CanMove")]
-        [HarmonyPostfix]
-        public static void PostAllowMoving(ref bool ___m_teleporting)
-        {
-            ___m_teleporting = _prev_m_teleporting;
+            return new CodeMatcher(instructions).MatchForward(false,
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.PropertyGetter(typeof(Player), "m_teleporting")))
+                .SetAndAdvance(OpCodes.Call, 
+                    Transpilers.EmitDelegate<Func<Player, bool>>(player => !IsAreaLoadedLazy()).operand)
+                .InstructionEnumeration();
         }
 
         [HarmonyPatch(typeof(Player), "UpdateTeleport")]
         [HarmonyPostfix]
-        public static void UpdateDeltaTime(ref float dt, ref float ___m_teleportTimer)
+        public static void UpdateDeltaTime(ref float dt, ref Player __instance, ref float ___m_teleportTimer)
         {
-            ___m_teleportTimer *= 1.5f; // Decreases the artificial upper bound a bit.
+            if (!ImmersivePortals.enablePortalBlackScreen.Value ||
+                DateTimeOffset.Now.Subtract(ImmersivePortals.context._lastTeleportTime).TotalSeconds > Hud.instance.GetFadeDuration(__instance)) {
+                ___m_teleportTimer *= 1.5f; // Decreases the artificial upper bound by 50%.
+            }
         }
 
         [HarmonyPatch(typeof(Player), "UpdateTeleport")]
         [HarmonyTranspiler]
-        public static IEnumerable<CodeInstruction> LetMeInLetMeIn(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> ApplyConsiderAreaLoadedConfig(IEnumerable<CodeInstruction> instructions)
         {
             return new CodeMatcher(instructions).MatchForward(false,
                         new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(ZNetScene), "IsAreaReady")))
                                 .SetAndAdvance(OpCodes.Call, 
-                                         Transpilers.EmitDelegate<Func<ZNetScene, Vector3, bool>>((zNetView, targetPos) => ConsiderAreaLoaded()).operand)
+                                         Transpilers.EmitDelegate<Func<ZNetScene, Vector3, bool>>((zNetView, targetPos) => IsAreaLoadedLazy()).operand)
                                 .InstructionEnumeration();
         }
 
-        private static bool ConsiderAreaLoaded()
+        private static bool IsAreaLoadedLazy()
         {
             return DateTimeOffset.Now.Subtract(ImmersivePortals.context._lastTeleportTime).TotalSeconds >
                    ImmersivePortals.considerSceneLoadedSeconds.Value;
