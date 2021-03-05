@@ -102,11 +102,11 @@ namespace ImmersivePortals.Patches
 
                 // Teleport him!
                 player.m_teleporting = true; // May act as a lock for async routines.
-                targetPos.y = ZoneSystem.instance.GetSolidHeight(targetPos) + 0.5f;
+                player.m_maxAirAltitude = player.transform.position.y;
+                targetPos.y += 0.5f;
                 player.transform.position = targetPos;
                 player.transform.rotation = targetRot;
                 player.m_body.velocity = Vector3.zero;
-                player.m_maxAirAltitude = player.transform.position.y;
                 player.SetLookDir(targetRot * Vector3.forward);
                 //player.m_teleportCooldown = 0f;
                 player.m_teleporting = false;
