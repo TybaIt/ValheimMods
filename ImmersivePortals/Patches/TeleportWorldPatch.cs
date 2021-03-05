@@ -69,19 +69,20 @@ namespace ImmersivePortals.Patches
                     .InstructionEnumeration();
         }
 
-        public static bool ImmersiveTeleportTo(Character player, Vector3 pos, Quaternion rot, bool distantTeleport, TeleportWorld instance, ZDOID zdoid)
+        public static bool ImmersiveTeleportTo(Character c, Vector3 pos, Quaternion rot, bool distantTeleport, TeleportWorld instance, ZDOID zdoid)
         {
+            var player = (Player)c;
             var zdo = ZDOMan.instance.GetZDO(zdoid);
             var trigger = instance.GetComponentInChildren<TeleportWorldTrigger>();
-            var target = ZNetScene.instance.FindInstance(zdo)?.gameObject ?? ImmersivePortals.forceInstantiatePortalExit.Value ? 
-                                    ZNetScene.instance.CreateObject(zdo) : null;
+
+            var target = ZNetScene.instance.FindInstance(zdo)?.gameObject;
 
             if (target == null) {
-                //Fallback to original method.
-                return player.TeleportTo(pos, rot, ZNetScene.instance.OutsideActiveArea(pos));
+                // Fallback to original method.
+                return player.TeleportTo(pos, rot, distantTeleport);
             }
 
-            //Calculate angle at target trigger bounds that reflects angle at which overlapping at source trigger occurred.
+            // Calculate angle at target trigger bounds that reflects angle at which overlapping at source trigger occurred.
             var targetTrigger = target.GetComponentInChildren<TeleportWorldTrigger>();
 
             float rotationDiff = -Quaternion.Angle(trigger.transform.rotation, targetTrigger.transform.rotation);
@@ -92,7 +93,27 @@ namespace ImmersivePortals.Patches
             Vector3 a = targetTrigger.transform.rotation * Vector3.forward * 1.1f;
             var targetPos = targetTrigger.transform.position + a * instance.m_exitDistance + positionOffset;
 
-            return player.TeleportTo(targetPos, targetRot, ZNetScene.instance.OutsideActiveArea(targetPos));
+            if (!ZNetScene.instance.OutsideActiveArea(targetPos)) {
+                // Portal is in the active area thus close enough for instant teleport.
+
+                if (player.IsTeleporting()/*|| player.m_teleportCooldown < 2f */) {
+                    return false;
+                }
+
+                // Teleport him!
+                player.m_teleporting = true; // May act as a lock for async routines.
+                targetPos.y = ZoneSystem.instance.GetSolidHeight(targetPos) + 0.5f;
+                player.transform.position = targetPos;
+                player.transform.rotation = targetRot;
+                player.m_body.velocity = Vector3.zero;
+                player.m_maxAirAltitude = player.transform.position.y;
+                player.SetLookDir(targetRot * Vector3.forward);
+                //player.m_teleportCooldown = 0f;
+                player.m_teleporting = false;
+                player.ResetCloth();
+                return true;
+            }
+            return player.TeleportTo(targetPos, targetRot, true);
         }
     }
 }
