@@ -1,6 +1,8 @@
 ﻿using HarmonyLib;
 using ImmersivePortals.Utils;
 using System;
+using System.Collections.Generic;
+using System.Reflection.Emit;
 using UnityEngine;
 
 namespace ImmersivePortals.Patches
@@ -45,73 +47,52 @@ namespace ImmersivePortals.Patches
 
         [HarmonyPatch("Teleport")]
         [HarmonyPrefix]
-        public static bool TeleportFast(ref Player player, TeleportWorld __instance, ref ZNetView ___m_nview, ref float ___m_exitDistance)
+        public static bool IsFront(ref Player player, TeleportWorld __instance, ref ZNetView ___m_nview, ref float ___m_exitDistance)
         {
-            var entry = __instance.GetComponentInChildren<TeleportWorldTrigger>();
-
-            Vector3 portalToPlayer = player.transform.position - entry.transform.position;
-            float dotProduct = Vector3.Dot(entry.transform.forward - entry.transform.up, portalToPlayer);
-
-            if (dotProduct < 1f) {
-                // Player has moved across the portal from the wrong side.
-                return false;
-            }
-
-            #region original game code TeleportWorld.Teleport
-            // TODO: Could be replaced by Transpiler which disables .Teleport call. Rest of the body needs to be inserted.
-            if (!__instance.TargetFound())
-            {
-                return false;
-            }
-            if (!player.IsTeleportable())
-            {
-                player.Message(MessageHud.MessageType.Center, "$msg_noteleport", 0, null);
-                return false;
-            }
-            ZDOID zdoid = ___m_nview.GetZDO().GetZDOID("target");
-            if (zdoid == ZDOID.None)
-            {
-                return false;
-            }
-            ZDO zdo = ZDOMan.instance.GetZDO(zdoid);
-            #endregion
-
-            var exitPortal = ZNetScene.instance.FindInstance(zdo)?.gameObject ?? ImmersivePortals.forceInstantiatePortalExit.Value ? 
-                                     ZNetScene.instance.CreateObject(zdo) : null;
-
-            if (exitPortal == null)
-            {
-                if (ImmersivePortals.forceInstantiatePortalExit.Value)
-                    ZLog.Log($"[{ImmersivePortals.MODNAME}] Unable to create exit portal -> Fallback to original method");
-                return true;
-            }
-
-            ImmersivePortals.context._lastTeleportTime = DateTime.Now;
-
-            var exit = exitPortal.GetComponentInChildren<TeleportWorldTrigger>();
-
-            ZLog.Log($"Teleporting {player.GetPlayerName()}.");
-            player.m_teleporting = true;
-            float rotationDiff = -Quaternion.Angle(entry.transform.rotation, exit.transform.rotation);
-            //rotationDiff += 180;
-            //player.transform.Rotate(Vector3.up, rotationDiff);
-            var targetRot = exit.transform.rotation;
-
-            Vector3 positionOffset = Quaternion.Euler(0f, rotationDiff, 0f) * portalToPlayer;
-            Vector3 a = exit.transform.rotation * Vector3.forward * 1.1f;
-            var targetPos = exit.transform.position + a * ___m_exitDistance + positionOffset;
-            targetPos.y = ZoneSystem.instance.GetSolidHeight(targetPos) + 0.5f;
-
-            // Teleport him!
-            player.transform.position = targetPos;
-            player.transform.rotation = targetRot;
-            player.m_body.velocity = Vector3.zero;
-            player.m_maxAirAltitude = player.transform.position.y;
-            player.SetLookDir(targetRot * Vector3.forward);
-            player.m_teleporting = false;
-            player.ResetCloth();
-            return false;
+            var trigger = __instance.GetComponentInChildren<TeleportWorldTrigger>();
+            Vector3 triggerToPlayer = player.transform.position - trigger.transform.position;
+            float dotProduct = Vector3.Dot(trigger.transform.forward - trigger.transform.up, triggerToPlayer);
+            // Player has moved across the portal from front side.
+            return dotProduct > 1f;
         }
 
+        [HarmonyPatch("Teleport")]
+        [HarmonyTranspiler]
+        public static IEnumerable<CodeInstruction> ReplaceTeleportToWithImmersiveApproach(IEnumerable<CodeInstruction> instructions)
+        {
+            return new CodeMatcher(instructions).MatchForward(false,
+                    new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), "TeleportTo")))
+                    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
+                    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_0))
+                    .SetAndAdvance(OpCodes.Call, 
+                        Transpilers.EmitDelegate<Func<Character, Vector3, Quaternion, bool, TeleportWorld, ZDOID, bool>>(ImmersiveTeleportTo).operand)
+                    .InstructionEnumeration();
+        }
+
+        public static bool ImmersiveTeleportTo(Character player, Vector3 pos, Quaternion rot, bool distantTeleport, TeleportWorld instance, ZDOID zdoid)
+        {
+            var zdo = ZDOMan.instance.GetZDO(zdoid);
+            var trigger = instance.GetComponentInChildren<TeleportWorldTrigger>();
+            var target = ZNetScene.instance.FindInstance(zdo)?.gameObject ?? ImmersivePortals.forceInstantiatePortalExit.Value ? 
+                                    ZNetScene.instance.CreateObject(zdo) : null;
+
+            if (target == null) {
+                //Fallback to original method.
+                return player.TeleportTo(pos, rot, ZNetScene.instance.OutsideActiveArea(pos));
+            }
+
+            //Calculate angle at target trigger bounds that reflects angle at which overlapping at source trigger occurred.
+            var targetTrigger = target.GetComponentInChildren<TeleportWorldTrigger>();
+
+            float rotationDiff = -Quaternion.Angle(trigger.transform.rotation, targetTrigger.transform.rotation);
+            var targetRot = targetTrigger.transform.rotation;
+
+            Vector3 triggerToPlayer = player.transform.position - trigger.transform.position;
+            Vector3 positionOffset = Quaternion.Euler(0f, rotationDiff, 0f) * triggerToPlayer;
+            Vector3 a = targetTrigger.transform.rotation * Vector3.forward * 1.1f;
+            var targetPos = targetTrigger.transform.position + a * instance.m_exitDistance + positionOffset;
+
+            return player.TeleportTo(targetPos, targetRot, ZNetScene.instance.OutsideActiveArea(targetPos));
+        }
     }
 }
