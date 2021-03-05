@@ -1,12 +1,10 @@
-﻿using System;
-using BepInEx;
+﻿using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using System.IO;
-using System.Reflection;
-using BepInEx.Configuration;
 using ImmersivePortals.Utils;
-using UnityEngine;
+using System;
+using System.Reflection;
 
 namespace ImmersivePortals
 {

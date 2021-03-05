@@ -1,10 +1,6 @@
-﻿using System;
-using HarmonyLib;
+﻿using HarmonyLib;
 using ImmersivePortals.Utils;
-using System.IO;
-using System.Reflection;
-using System.Threading.Tasks;
-using ImmersivePortals.Entities;
+using System;
 using UnityEngine;
 
 namespace ImmersivePortals.Patches

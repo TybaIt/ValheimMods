@@ -1,0 +1,9 @@
+{
+  "name": "ImmersivePortals",
+  "description": "A BepInEx mod for Valheim. Removes the loading sceen from portals entirely and renders the destination onto the entry portal.",
+  "version_number": "0.2.5",
+  "website_url": "https://www.nexusmods.com/valheim/mods/268",
+  "dependencies": [
+    "denikson-BepInExPack_Valheim-5.4.600"
+  ]
+}
