@@ -101,6 +101,7 @@ namespace ImmersivePortals.Patches
                 }
 
                 // Teleport him!
+                PlayerPatch._lastTeleportTime = DateTime.Now;
                 player.m_teleporting = true; // May act as a lock for async routines.
                 player.m_maxAirAltitude = player.transform.position.y;
                 targetPos.y += 0.2f;
