@@ -10,7 +10,7 @@ namespace ImmersivePortals.Patches
     {
         [HarmonyPatch("ApplyDamage")]
         [HarmonyTranspiler]
-        public static IEnumerable<CodeInstruction> PreventDamageWhile(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> PreventDamageWhileTeleporting(IEnumerable<CodeInstruction> instructions)
         {
             return new CodeMatcher(instructions).MatchForward(false,
                     new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), "IsTeleporting")))

@@ -18,7 +18,7 @@ namespace ImmersivePortals.Patches
             if (!ImmersivePortals.enablePortalBlackScreen.Value ||
                 DateTimeOffset.Now.Subtract(_lastTeleportTime).TotalSeconds > Hud.instance.GetFadeDuration(__instance)) {
                 // Decreases the artificial minimum teleport duration.
-                ___m_teleportTimer *= (1 + (float)ImmersivePortals.decreaseTeleportTimeByPercent.Value / 100).Clamp(1f, 2f);
+                ___m_teleportTimer *= (1f + ImmersivePortals.decreaseTeleportTimeByPercent.Value / 100f).Clamp(1f, 2f);
             }
         }
 
