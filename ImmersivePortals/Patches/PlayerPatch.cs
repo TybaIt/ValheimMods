@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection.Emit;
 using UnityEngine;
 
@@ -10,19 +11,36 @@ namespace ImmersivePortals.Patches
     public static class PlayerPatch
     {
         internal static DateTime _lastTeleportTime = DateTime.Now;
+        private static bool hasTeleported;
 
-        [HarmonyPatch(typeof(Player), "UpdateTeleport")]
-        [HarmonyPostfix]
+        [HarmonyPatch("UpdateTeleport")]
+        [HarmonyPrefix]
         public static void DecreaseTeleportTime(ref float dt, ref Player __instance, ref float ___m_teleportTimer)
         {
-            if (!ImmersivePortals.enablePortalBlackScreen.Value ||
-                DateTimeOffset.Now.Subtract(_lastTeleportTime).TotalSeconds > Hud.instance.GetFadeDuration(__instance)) {
+            if (__instance.m_teleporting && (!ImmersivePortals.enablePortalBlackScreen.Value || 
+                 DateTimeOffset.Now.Subtract(_lastTeleportTime).TotalSeconds > Hud.instance.GetFadeDuration(__instance))) {
+
+                dt *= ImmersivePortals.multiplyDeltaTimeBy.Value;
                 // Decreases the artificial minimum teleport duration.
                 ___m_teleportTimer *= (1f + ImmersivePortals.decreaseTeleportTimeByPercent.Value / 100f).Clamp(1f, 2f);
+                
             }
         }
 
-        [HarmonyPatch(typeof(Player), "UpdateTeleport")]
+        [HarmonyPatch("UpdateTeleport")]
+        [HarmonyPostfix]
+        public static void LogTeleportTime(ref bool ___m_teleporting) {
+            if (hasTeleported && !___m_teleporting) {
+                hasTeleported = false;
+                var time = DateTimeOffset.Now.Subtract(_lastTeleportTime);
+                var message = $"Teleport took {time.ToString("s\\.fff", CultureInfo.InvariantCulture)} second{(time.TotalSeconds < 2 ? "" : "s")}";
+                if (ImmersivePortals.enableNotifications.Value)
+                    Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, message);
+                ZLog.Log($"[{ImmersivePortals.MODNAME}] {message}");
+            }
+        }
+
+        [HarmonyPatch("UpdateTeleport")]
         [HarmonyTranspiler]
         public static IEnumerable<CodeInstruction> ApplyConsiderAreaLoadedConfig(IEnumerable<CodeInstruction> instructions)
         {
@@ -39,12 +57,13 @@ namespace ImmersivePortals.Patches
                    ImmersivePortals.considerSceneLoadedSeconds.Value;
         }
 
-        [HarmonyPatch(typeof(Player), "TeleportTo")]
+        [HarmonyPatch("TeleportTo")]
         [HarmonyPostfix]
-        public static void SetLastTeleportTime(ref Vector3 pos, ref Quaternion rot, ref bool distantTeleport, ref bool __result)
+        public static void SetLastTeleportTime(bool __result)
         {
             if (__result) {
                 _lastTeleportTime = DateTime.Now;
+                hasTeleported = true;
             }
         }
     }
