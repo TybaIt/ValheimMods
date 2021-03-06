@@ -3,7 +3,9 @@ using ImmersivePortals.Utils;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ImmersivePortals.Patches
 {
@@ -90,25 +92,26 @@ namespace ImmersivePortals.Patches
 
             Vector3 triggerToPlayer = player.transform.position - trigger.transform.position;
             Vector3 positionOffset = Quaternion.Euler(0f, rotationDiff, 0f) * triggerToPlayer;
-            Vector3 a = targetTrigger.transform.rotation * Vector3.forward * 1.1f;
+            Vector3 a = targetTrigger.transform.rotation * Vector3.forward * 1.15f;
             var targetPos = targetTrigger.transform.position + a * instance.m_exitDistance + positionOffset;
 
-            if (!ZNetScene.instance.OutsideActiveArea(targetPos)) {
+            if (!ZNetScene.instance.OutsideActiveArea(targetPos, player.transform.position)/*|| target.gameObject.activeSelf*/) {
                 // Portal is in the active area thus close enough for instant teleport.
 
-                if (player.IsTeleporting()/*|| player.m_teleportCooldown < 2f */) {
+                if (player.IsTeleporting() || player.m_teleportCooldown < 0.1f ) {
                     return false;
                 }
 
                 // Teleport him!
+                PlayerPatch._lastTeleportTime = DateTime.Now;
                 player.m_teleporting = true; // May act as a lock for async routines.
                 player.m_maxAirAltitude = player.transform.position.y;
-                targetPos.y += 0.5f;
+                targetPos.y += 0.2f;
                 player.transform.position = targetPos;
                 player.transform.rotation = targetRot;
                 player.m_body.velocity = Vector3.zero;
                 player.SetLookDir(targetRot * Vector3.forward);
-                //player.m_teleportCooldown = 0f;
+                player.m_teleportCooldown = 0f;
                 player.m_teleporting = false;
                 player.ResetCloth();
                 return true;

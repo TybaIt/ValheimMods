@@ -9,17 +9,7 @@ namespace ImmersivePortals.Patches
     [HarmonyPatch(typeof(Player))]
     public static class PlayerPatch
     {
-        private static DateTime _lastTeleportTime = DateTime.Now;
-
-        [HarmonyPatch("CanMove")]
-        [HarmonyTranspiler]
-        public static IEnumerable<CodeInstruction> ReplaceCanMoveConditional(IEnumerable<CodeInstruction> instructions)
-        {
-            return new CodeMatcher(instructions).MatchForward(false,
-                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Player), "m_teleporting")))
-                    .SetAndAdvance(OpCodes.Call, Transpilers.EmitDelegate<Func<Player, bool>>(player => !IsAreaLoadedLazy()).operand)
-                    .InstructionEnumeration();
-        }
+        internal static DateTime _lastTeleportTime = DateTime.Now;
 
         [HarmonyPatch(typeof(Player), "UpdateTeleport")]
         [HarmonyPostfix]
