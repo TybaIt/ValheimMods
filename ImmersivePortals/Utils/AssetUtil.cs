@@ -15,7 +15,7 @@ namespace ImmersivePortals.Utils
             if (shaderAsset == null) {
                 Debug.Log($"[{ImmersivePortals.MODNAME}] Failed to load AssetBundle");
             }
-            return shaderAsset?.LoadAsset<Shader>("ScreenCutoutShader.shader") ?? Shader.Find("Standard");
+            return shaderAsset?.LoadAsset<Shader>("ScreenCutoutShader") ?? Shader.Find("Standard");
         }
     }
 }

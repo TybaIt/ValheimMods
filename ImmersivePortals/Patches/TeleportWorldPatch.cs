@@ -113,7 +113,7 @@ namespace ImmersivePortals.Patches
                 player.ResetCloth();
                 return true;
             }
-            return player.TeleportTo(targetPos, targetRot, true);
+            return player.TeleportTo(targetPos, targetRot, distantTeleport);
         }
     }
 }
