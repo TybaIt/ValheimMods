@@ -16,7 +16,7 @@ namespace ImmersivePortals
             MODNAME = "ImmersivePortals",
             AUTHOR = "Nekres",
             GUID = AUTHOR + "_" + MODNAME,
-            VERSION = "0.2.6.6";
+            VERSION = "0.2.6.7";
 
         internal readonly ManualLogSource log;
         internal readonly Harmony harmony;

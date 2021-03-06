@@ -3,9 +3,7 @@ using ImmersivePortals.Utils;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace ImmersivePortals.Patches
 {

@@ -10,13 +10,13 @@ namespace ImmersivePortals.Patches
     {
         [HarmonyPatch("ApplyDamage")]
         [HarmonyTranspiler]
-        public static IEnumerable<CodeInstruction> PauseDamage(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> PreventDamageWhile(IEnumerable<CodeInstruction> instructions)
         {
             return new CodeMatcher(instructions).MatchForward(false,
                     new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), "IsTeleporting")))
                 .SetAndAdvance(OpCodes.Call, 
-                    Transpilers.EmitDelegate<Func<Character, bool>>(Character => 
-                        DateTimeOffset.Now.Subtract(PlayerPatch._lastTeleportTime).TotalSeconds < 0.25f).operand)
+                    Transpilers.EmitDelegate<Func<Character, bool>>(player =>
+                        DateTimeOffset.Now.Subtract(PlayerPatch._lastTeleportTime).TotalSeconds < 0.25f || player.IsTeleporting()).operand)
                 .InstructionEnumeration();
         }
     }
