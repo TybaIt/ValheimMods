@@ -25,6 +25,11 @@ namespace ImmersivePortals
 
         #endregion
 
+        public static string[] AssetBundles = new string[]
+        {
+            "Shaders\\screencutoutshader"
+        };
+
         public static ImmersivePortals context;
         public static ConfigEntry<bool> enablePortalBlackScreen;
         public static ConfigEntry<bool> enableNotifications;

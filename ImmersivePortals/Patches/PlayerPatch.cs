@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection.Emit;
+using BepInEx.Logging;
+using ImmersivePortals.Utils;
 using UnityEngine;
 
 namespace ImmersivePortals.Patches
@@ -33,10 +35,8 @@ namespace ImmersivePortals.Patches
             if (hasTeleported && !___m_teleporting) {
                 hasTeleported = false;
                 var time = DateTimeOffset.Now.Subtract(_lastTeleportTime);
-                var message = $"Teleport took {time.ToString("s\\.fff", CultureInfo.InvariantCulture)} second{(time.TotalSeconds < 2 ? "" : "s")}";
-                if (ImmersivePortals.enableNotifications.Value)
-                    Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, message);
-                ZLog.Log($"[{ImmersivePortals.MODNAME}] {message}");
+                var timeString = $"{time.ToString("s\\.fff", CultureInfo.InvariantCulture)} second{(time.TotalSeconds < 2 ? "" : "s")}";
+                DebugUtil.LogInfo("Teleport took {0}", timeString);
             }
         }
 

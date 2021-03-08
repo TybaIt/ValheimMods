@@ -3,6 +3,8 @@ using ImmersivePortals.Utils;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using ImmersivePortals.Entities;
+using Steamworks;
 using UnityEngine;
 
 namespace ImmersivePortals.Patches
@@ -10,39 +12,69 @@ namespace ImmersivePortals.Patches
     [HarmonyPatch(typeof(TeleportWorld))]
     public static class TeleportWorldPatch {
 
-        //[HarmonyPatch("Awake")]
-        //[HarmonyPostfix]
-        public static void CreateRenderTarget(TeleportWorld __instance, ref ZNetView ___m_nview, ref bool ___m_model)
+        [HarmonyPatch("TargetFound")] 
+        [HarmonyPostfix]
+        public static void CreateRenderTarget(TeleportWorld __instance, bool __result)
         {
-            //TODO: Implement render view.
-            ZDOID zdoid = ___m_nview.GetZDO().GetZDOID("target");
-            if (zdoid == ZDOID.None)
-            {
+            var go = __instance.gameObject;
+
+            PortalCamera portalCamera;
+
+            if (!__result) {
+                if (go.TryGetComponent(out portalCamera))
+                    UnityEngine.Object.Destroy(portalCamera);
+                return;
+            }
+
+            if (go.TryGetComponent(out portalCamera)) {
+                return;
+            }
+
+            ZDOID zdoid = __instance.m_nview.GetZDO().GetZDOID("target");
+            if (zdoid == ZDOID.None) {
                 return;
             }
             ZDO zdo = ZDOMan.instance.GetZDO(zdoid);
 
+            if (!ZoneSystem.instance.IsZoneLoaded(zdo.GetPosition()))
+            {
+                return;
+            }
+
+
+            //TODO: Implement render view.
             var entry = __instance.GetComponentInChildren<TeleportWorldTrigger>();
 
-            GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            
-            Material mat = new Material(AssetUtil.GetScreenCutoutShader());
-            var tex = new RenderTexture();
-            mat.mainTexture = tex;
-            
-            cube.gameObject.GetComponent<MeshRenderer>().material = mat;
-            cube.transform.position = entry.transform.position;
-            cube.transform.rotation = entry.transform.rotation;
-            cube.transform.localScale = new Vector3(entry.transform.localScale.x,entry.transform.localScale.y,0.1f);//1.742178
-            cube.GetComponent<Collider>().enabled = false;
+            GameObject renderTarget = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            Material mat = new Material(AssetUtil.LoadAsset<Shader>("assets/screencutoutshader.shader"));
+            renderTarget.GetComponent<Renderer>().material = mat;
+            renderTarget.GetComponent<Renderer>().sharedMaterial = mat;
+            renderTarget.transform.position = entry.transform.position;
+            renderTarget.transform.rotation = __instance.transform.rotation;
+            renderTarget.transform.rotation.SetLookRotation(renderTarget.transform.rotation * Vector3.down);
+            renderTarget.transform.localScale = new Vector3(entry.transform.localScale.x + 0.9f, 0.1f,
+                entry.transform.localScale.z + 0.9f); //1.742178
+            renderTarget.GetComponent<Collider>().enabled = false;
 
-            Camera camera = new Camera();
-            camera.transform.position = zdo.GetPosition();
+            go.AddComponent<PortalCamera>();
+            portalCamera = go.GetComponent<PortalCamera>();
+            portalCamera.gameObject.AddComponent<Camera>();
+            var camera = portalCamera.gameObject.GetComponent<Camera>();
+
+            camera.transform.position =
+                new Vector3(zdo.GetPosition().x, zdo.GetPosition().y + 0.5f,
+                    zdo.GetPosition().z); //new Vector3(zdo.GetPosition().x, zdo.GetPosition().y + 0.5f, zdo.GetPosition().z);
             camera.transform.rotation = zdo.GetRotation();
-            if (camera.targetTexture != null) 
+            if (camera.targetTexture != null)
                 camera.targetTexture.Release();
             camera.targetTexture = new RenderTexture(Screen.width, Screen.height, 24);
             mat.mainTexture = camera.targetTexture;
+
+            portalCamera.camera = camera;
+            portalCamera.otherPortal = new Transform() {position = zdo.GetPosition(), rotation = zdo.GetRotation()};
+            portalCamera.playerCamera = GameCamera.instance.transform;
+            portalCamera.portal = __instance.transform;
+            portalCamera.renderTarget = renderTarget;
         }
 
         [HarmonyPatch("Teleport")]
