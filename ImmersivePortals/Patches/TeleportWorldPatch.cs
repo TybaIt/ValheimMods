@@ -12,8 +12,8 @@ namespace ImmersivePortals.Patches
     [HarmonyPatch(typeof(TeleportWorld))]
     public static class TeleportWorldPatch {
 
-        [HarmonyPatch("TargetFound")] 
-        [HarmonyPostfix]
+        //[HarmonyPatch("TargetFound")] 
+        //[HarmonyPostfix]
         public static void CreateRenderTarget(TeleportWorld __instance, bool __result)
         {
             var go = __instance.gameObject;
@@ -45,15 +45,16 @@ namespace ImmersivePortals.Patches
             //TODO: Implement render view.
             var entry = __instance.GetComponentInChildren<TeleportWorldTrigger>();
 
-            GameObject renderTarget = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            //TODO circle shader for plane (Cylinder primitive is bad due to both sides being rendered)
+            GameObject renderTarget = GameObject.CreatePrimitive(PrimitiveType.Plane);
             Material mat = new Material(AssetUtil.LoadAsset<Shader>("assets/screencutoutshader.shader"));
             renderTarget.GetComponent<Renderer>().material = mat;
-            renderTarget.GetComponent<Renderer>().sharedMaterial = mat;
-            renderTarget.transform.position = entry.transform.position;
-            renderTarget.transform.rotation = __instance.transform.rotation;
-            renderTarget.transform.rotation.SetLookRotation(renderTarget.transform.rotation * Vector3.down);
-            renderTarget.transform.localScale = new Vector3(entry.transform.localScale.x + 0.9f, 0.1f,
-                entry.transform.localScale.z + 0.9f); //1.742178
+            renderTarget.transform.position = new Vector3(entry.transform.position.x, entry.transform.position.y + 0.5f, entry.transform.position.z);
+            renderTarget.transform.Rotate(__instance.transform.rotation.eulerAngles.x,__instance.transform.rotation.eulerAngles.y - 90f,__instance.transform.rotation.eulerAngles.z - 90f, Space.Self);
+            renderTarget.transform.localScale = new Vector3(0.2f,0.2f,1f); //1.742178
+            //renderTarget.transform.position = new Vector3(entry.transform.position.x, entry.transform.position.y + 0.5f, entry.transform.position.z);
+            //renderTarget.transform.Rotate(__instance.transform.rotation.eulerAngles.x,__instance.transform.rotation.eulerAngles.y - 90f,__instance.transform.rotation.eulerAngles.z - 90f, Space.Self);
+            //renderTarget.transform.localScale = new Vector3(entry.transform.localScale.x + 0.9f, 0.05f, entry.transform.localScale.z + 0.9f); //1.742178
             renderTarget.GetComponent<Collider>().enabled = false;
 
             go.AddComponent<PortalCamera>();
@@ -69,7 +70,6 @@ namespace ImmersivePortals.Patches
                 camera.targetTexture.Release();
             camera.targetTexture = new RenderTexture(Screen.width, Screen.height, 24);
             mat.mainTexture = camera.targetTexture;
-
             portalCamera.camera = camera;
             portalCamera.otherPortal = new Transform() {position = zdo.GetPosition(), rotation = zdo.GetRotation()};
             portalCamera.playerCamera = GameCamera.instance.transform;
