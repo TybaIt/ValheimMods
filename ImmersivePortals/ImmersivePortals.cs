@@ -2,7 +2,6 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using ImmersivePortals.Utils;
 using System.Reflection;
 
 namespace ImmersivePortals
@@ -27,7 +26,7 @@ namespace ImmersivePortals
 
         public static string[] AssetBundles = new string[]
         {
-            "Shaders\\screencutoutshader"
+            "Assets/AssetBundles/immersiveportals"
         };
 
         public static ImmersivePortals context;

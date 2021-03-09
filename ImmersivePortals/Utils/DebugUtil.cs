@@ -1,6 +1,6 @@
 ﻿using BepInEx.Logging;
 
-namespace ImmersivePortals.Utils
+namespace ImmersivePortals
 {
     public static class DebugUtil
     {

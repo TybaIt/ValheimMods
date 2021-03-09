@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using BepInEx.Logging;
 using UnityEngine;
 
-namespace ImmersivePortals.Utils
+namespace ImmersivePortals
 {
     public static class AssetUtil
     {
-        private static readonly IReadOnlyList<AssetBundle> _assetBundles; 
+        private static readonly IReadOnlyList<AssetBundle> _assetBundles;
         static AssetUtil()
         {
             var assetBundles = new List<AssetBundle>();
@@ -31,18 +29,10 @@ namespace ImmersivePortals.Utils
             _assetBundles = assetBundles;
         }
 
-        private static IEnumerable<AssetBundle> GetModBundles()
-        {
-            return AssetBundle.GetAllLoadedAssetBundles().Where(x => ImmersivePortals.AssetBundles.Any(
-                y => y.Replace("\\", "/").ToLower().Equals(x.name.Replace("\\", "/").ToLower())));
-        }
-
         public static T LoadAsset<T>(string assetPath)
         {
-            var modBundles = GetModBundles();
-
             object asset = null;
-            foreach (var bundle in modBundles)
+            foreach (var bundle in _assetBundles)
             {
                 asset = bundle.LoadAsset(assetPath, typeof(T));
                 if (asset != null) break;

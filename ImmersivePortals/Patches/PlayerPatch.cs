@@ -3,8 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection.Emit;
-using BepInEx.Logging;
-using ImmersivePortals.Utils;
+using ImmersivePortals.Entities;
 using UnityEngine;
 
 namespace ImmersivePortals.Patches

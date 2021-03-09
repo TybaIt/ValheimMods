@@ -1,0 +1,22 @@
+ManifestFileVersion: 0
+CRC: 3754908615
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 379e4b796f324618881075bae0a14618
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 10a6a558690295dadb3dd990eda0821a
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Scripts/Shaders/Slice.shader
+- Assets/Scripts/Shaders/ScreenCutoutShader.shader
+- Assets/Scripts/Shaders/Portal.shader
+- Assets/Materials/Portal Screen.mat
+Dependencies: []

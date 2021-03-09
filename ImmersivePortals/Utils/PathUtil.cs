@@ -2,7 +2,7 @@
 using System.IO;
 using System.Reflection;
 
-namespace ImmersivePortals.Utils
+namespace ImmersivePortals
 {
     public static class PathUtil
     {
