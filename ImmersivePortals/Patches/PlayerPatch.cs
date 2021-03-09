@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection.Emit;
-using ImmersivePortals.Entities;
 using UnityEngine;
 
 namespace ImmersivePortals.Patches
@@ -24,7 +23,6 @@ namespace ImmersivePortals.Patches
                 dt *= ImmersivePortals.multiplyDeltaTimeBy.Value.Clamp(1, 10);
                 // Decreases the artificial minimum teleport duration.
                 ___m_teleportTimer *= (1f + ImmersivePortals.decreaseTeleportTimeByPercent.Value / 100f).Clamp(1f, 2f);
-                
             }
         }
 
