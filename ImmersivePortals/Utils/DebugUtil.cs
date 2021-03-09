@@ -6,8 +6,7 @@ namespace ImmersivePortals
     {
         private static void Log(string message, LogLevel level = LogLevel.None, params object[] args)
         {
-            message = string.Format(message, args);
-            ImmersivePortals.context.log.Log(level, message);
+            ImmersivePortals.context.log.Log(level, string.Format(message, args));
             if (ImmersivePortals.enableNotifications.Value) {
                 Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, message);
             }
