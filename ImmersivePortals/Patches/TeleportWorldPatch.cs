@@ -10,57 +10,46 @@ namespace ImmersivePortals.Patches
     [HarmonyPatch(typeof(TeleportWorld))]
     public static class TeleportWorldPatch
     {
-        [HarmonyPatch("TargetFound")] 
-        [HarmonyPostfix]
-        public static void CreateRenderTarget(TeleportWorld __instance, bool __result)
+        //[HarmonyPatch("Update")]
+        //[HarmonyPrefix]
+        public static void AddPortalComponent(ref TeleportWorld __instance)
         {
-            var go = __instance.gameObject;
+            if (__instance.gameObject.GetComponentInChildren<Portal>() == null) {
+                __instance.gameObject.AddComponent<Portal>();
 
-            Portal portal;
+                ZDOID zdoid = __instance.m_nview.GetZDO().GetZDOID("target");
+                if (zdoid == ZDOID.None) {
+                    return;
+                }
+                ZDO zdo = ZDOMan.instance.GetZDO(zdoid);
 
-            if (!__result) {
-                if (go.TryGetComponent(out portal))
-                    UnityEngine.Object.Destroy(portal);
-                return;
+                if (!ZoneSystem.instance.IsZoneLoaded(zdo.GetPosition())) {
+                    return;
+                }
+                var target = ZNetScene.instance.FindInstance(zdo)?.gameObject;
+                if (target == null) {
+                    return;
+                }
+
+                var entry = __instance;
+                var exit = target.GetComponentInParent<TeleportWorld>();
+
+                GameObject renderTarget = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                Material mat = new Material(AssetUtil.LoadAsset<Material>("assets/materials/portal screen.mat")) {
+                    shader = AssetUtil.LoadAsset<Shader>("assets/scripts/shaders/portal.shader")
+                };
+                renderTarget.GetComponent<MeshRenderer>().material = mat;
+                renderTarget.transform.position = new Vector3(entry.transform.position.x, entry.transform.position.y + 1f, entry.transform.position.z);
+                renderTarget.transform.Rotate(__instance.transform.rotation.eulerAngles.x,__instance.transform.rotation.eulerAngles.y - 90f,__instance.transform.rotation.eulerAngles.z - 90f, Space.Self);
+                renderTarget.transform.localScale = new Vector3(entry.transform.localScale.x + 0.9f, 0.05f, entry.transform.localScale.z + 0.9f); //1.742178
+                renderTarget.GetComponent<Collider>().enabled = false;
+
+                var portal = __instance.GetComponentInChildren<Portal>();
+                portal.gameObject.AddComponent<Camera>();
+                portal.linkedPortal = target.GetComponent<Portal>();
+                portal.screen = renderTarget.GetComponent<MeshRenderer>();
+                portal.Initialize();
             }
-
-            if (go.TryGetComponent(out portal)) {
-                return;
-            }
-
-            ZDOID zdoid = __instance.m_nview.GetZDO().GetZDOID("target");
-            if (zdoid == ZDOID.None) {
-                return;
-            }
-            ZDO zdo = ZDOMan.instance.GetZDO(zdoid);
-
-            if (!ZoneSystem.instance.IsZoneLoaded(zdo.GetPosition())) {
-                return;
-            }
-            var target = ZNetScene.instance.FindInstance(zdo)?.gameObject;
-            if (target == null) {
-                return;
-            }
-
-            //TODO: Implement render view.
-            var entry = __instance.GetComponentInChildren<TeleportWorldTrigger>();
-
-            GameObject renderTarget = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            Material mat = new Material(AssetUtil.LoadAsset<Material>("assets/materials/portal screen.mat")) {
-                shader = AssetUtil.LoadAsset<Shader>("assets/scripts/shaders/portal.shader")
-            };
-            renderTarget.GetComponent<MeshRenderer>().material = mat;
-            renderTarget.transform.position = new Vector3(entry.transform.position.x, entry.transform.position.y + 0.5f, entry.transform.position.z);
-            renderTarget.transform.Rotate(__instance.transform.rotation.eulerAngles.x,__instance.transform.rotation.eulerAngles.y - 90f,__instance.transform.rotation.eulerAngles.z - 90f, Space.Self);
-            renderTarget.transform.localScale = new Vector3(entry.transform.localScale.x + 0.9f, 0.05f, entry.transform.localScale.z + 0.9f); //1.742178
-            renderTarget.GetComponent<Collider>().enabled = false;
-
-            
-            go.AddComponent<Portal>();
-            portal = go.GetComponent<Portal>();
-            portal.linkedPortal = target.GetComponentInChildren<Portal>();
-            portal.screen = renderTarget.GetComponent<MeshRenderer>();
-            portal.gameObject.SetActive(true);
         }
 
         [HarmonyPatch("Teleport")]

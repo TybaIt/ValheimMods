@@ -19,10 +19,15 @@ namespace ImmersivePortals
                     DebugUtil.LogError("Failed to load AssetBundle '{0}'", bundle);
                     continue;
                 }
+                var assets = assetBundle.GetAllAssetNames();
+                if (assets == null) {
+                    DebugUtil.LogWarning("Loaded AssetBundle '{0}' but it appears to be empty!", bundle);
+                    continue;
+                }
                 assetBundles.Add(assetBundle);
                 DebugUtil.LogInfo("╔ Loaded AssetBundle '{0}'", assetBundle.name);
-                var assets = assetBundle.GetAllAssetNames();
-                for (int i = 0; i < assets.Length; i++) {
+                for (int i = 0; i < assets.Length; i++)
+                {
                     DebugUtil.LogInfo("{0}══ '{1}'", i == assets.Length - 1 ? "╚" : "╠", assets[i]);
                 }
             }

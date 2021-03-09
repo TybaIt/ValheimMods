@@ -46,14 +46,14 @@ namespace ImmersivePortals.Patches
             return new CodeMatcher(instructions).MatchForward(false,
                         new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(ZNetScene), "IsAreaReady")))
                         .SetAndAdvance(OpCodes.Call, 
-                                 Transpilers.EmitDelegate<Func<ZNetScene, Vector3, bool>>((zNetView, targetPos) => IsAreaLoadedLazy()).operand)
+                                 Transpilers.EmitDelegate<Func<ZNetScene, Vector3, bool>>(IsAreaLoadedLazy).operand)
                         .InstructionEnumeration();
         }
 
-        private static bool IsAreaLoadedLazy()
+        private static bool IsAreaLoadedLazy(ZNetScene zNetScene, Vector3 targetPos)
         {
             return DateTimeOffset.Now.Subtract(_lastTeleportTime).TotalSeconds >
-                   ImmersivePortals.considerSceneLoadedSeconds.Value;
+                   ImmersivePortals.considerSceneLoadedSeconds.Value || zNetScene.IsAreaReady(targetPos);
         }
 
         [HarmonyPatch("TeleportTo")]

@@ -4,12 +4,11 @@ using UnityEngine;
 namespace ImmersivePortals.Entities
 {
     public class Portal : MonoBehaviour {
-        [Header ("Main Settings")]
+
         public Portal linkedPortal;
         public MeshRenderer screen;
         public int recursionLimit = 5;
 
-        [Header ("Advanced Settings")]
         public float nearClipOffset = 0.05f;
         public float nearClipLimit = 0.2f;
 
@@ -21,22 +20,27 @@ namespace ImmersivePortals.Entities
         List<PortalTraveller> trackedTravellers;
         MeshFilter screenMeshFilter;
 
-        void Awake () {
+        private bool _initialized;
+
+        public void Initialize() {
             playerCam = Camera.main;
-            gameObject.AddComponent<Camera>();
             portalCam = GetComponentInChildren<Camera> ();
             portalCam.enabled = false;
             trackedTravellers = new List<PortalTraveller> ();
             screenMeshFilter = screen.GetComponent<MeshFilter> ();
             screen.material.SetInt ("displayMask", 1);
+            _initialized = true;
         }
 
         void LateUpdate () {
+            if (!_initialized) {
+                return;
+            }
+
             HandleTravellers ();
         }
 
         void HandleTravellers () {
-
             for (int i = 0; i < trackedTravellers.Count; i++) {
                 PortalTraveller traveller = trackedTravellers[i];
                 Transform travellerT = traveller.transform;
@@ -66,6 +70,7 @@ namespace ImmersivePortals.Entities
 
         // Called before any portal cameras are rendered for the current frame
         public void PrePortalRender () {
+            if (!_initialized) return;
             foreach (var traveller in trackedTravellers) {
                 UpdateSliceParams (traveller);
             }
@@ -74,20 +79,12 @@ namespace ImmersivePortals.Entities
         // Manually render the camera attached to this portal
         // Called after PrePortalRender, and before PostPortalRender
         public void Render () {
-
+            if (!_initialized) return;
             // Skip rendering the view from this portal if player is not looking at the linked portal
             if (!CameraUtil.VisibleFromCamera (linkedPortal.screen, playerCam)) {
                 return;
             }
 
-            if (linkedPortal == null)
-            {
-                DebugUtil.LogError("linkedPortal was null");
-            }
-            if (playerCam == null)
-            {
-                DebugUtil.LogError("playerCam was null");
-            }
             CreateViewTexture ();
 
             var localToWorldMatrix = playerCam.transform.localToWorldMatrix;
@@ -96,6 +93,7 @@ namespace ImmersivePortals.Entities
 
             int startIndex = 0;
             portalCam.projectionMatrix = playerCam.projectionMatrix;
+
             for (int i = 0; i < recursionLimit; i++) {
                 if (i > 0) {
                     // No need for recursive rendering if linked portal is not visible through this portal
@@ -187,6 +185,7 @@ namespace ImmersivePortals.Entities
 
         // Called once all portals have been rendered, but before the player camera renders
         public void PostPortalRender () {
+            if (!_initialized) return;
             foreach (var traveller in trackedTravellers) {
                 UpdateSliceParams (traveller);
             }
@@ -290,6 +289,7 @@ namespace ImmersivePortals.Entities
         }
 
         void OnTriggerEnter (Collider other) {
+            if (!_initialized) return;
             var traveller = other.GetComponent<PortalTraveller> ();
             if (traveller) {
                 OnTravellerEnterPortal (traveller);
@@ -297,6 +297,7 @@ namespace ImmersivePortals.Entities
         }
 
         void OnTriggerExit (Collider other) {
+            if (!_initialized) return;
             var traveller = other.GetComponent<PortalTraveller> ();
             if (traveller && trackedTravellers.Contains (traveller)) {
                 traveller.ExitPortalThreshold ();

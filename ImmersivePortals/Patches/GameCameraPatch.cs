@@ -6,11 +6,12 @@ namespace ImmersivePortals.Patches
     [HarmonyPatch(typeof(GameCamera))]
     public static class GameCameraPatch
     {
-        [HarmonyPatch("Awake")]
-        [HarmonyPostfix]
+        //[HarmonyPatch("UpdateCamera")]
+        //[HarmonyPrefix]
         public static void AddMainCameraForPreCulling(ref GameCamera __instance)
         {
-            __instance.gameObject.AddComponent<MainCamera>();
+            if (__instance.gameObject.GetComponent<MainCamera>() == null)
+                __instance.gameObject.AddComponent<MainCamera>();
         }
     }
 }
