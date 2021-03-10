@@ -19,7 +19,7 @@ namespace ImmersivePortals
                 }
                 var assets = assetBundle.GetAllAssetNames();
                 if (assets == null) {
-                    DebugUtil.LogWarning("Loaded AssetBundle '{0}' but it appears to be empty!", bundle);
+                    DebugUtil.LogWarning("Loaded AssetBundle '{0}' but it appears to be empty!", assetBundle.name);
                     continue;
                 }
                 assetBundles.Add(assetBundle);
