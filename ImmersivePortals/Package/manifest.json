@@ -1,7 +1,7 @@
 {
   "name": "ImmersivePortals",
   "description": "A BepInEx mod for Valheim.\nAbility to customize various aspects of using portals such as disabling the black transition screen or manipulating load times.\nImproves teleportation logic further by making short distance portals always instantaneous and calculating a destination angle as reflection of the angle at which the entrance portal was crossed.",
-  "version_number": "0.2.7.4",
+  "version_number": "0.2.7.5",
   "website_url": "https://www.nexusmods.com/valheim/mods/268",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.600"
