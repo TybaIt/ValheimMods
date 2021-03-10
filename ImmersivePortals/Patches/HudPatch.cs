@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
-
 namespace ImmersivePortals.Patches
 {
     [HarmonyPatch(typeof(Hud))]

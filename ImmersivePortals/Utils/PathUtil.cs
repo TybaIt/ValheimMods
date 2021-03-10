@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-
 namespace ImmersivePortals
 {
     public static class PathUtil

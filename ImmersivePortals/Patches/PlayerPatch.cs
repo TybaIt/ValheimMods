@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection.Emit;
 using UnityEngine;
-
 namespace ImmersivePortals.Patches
 {
     [HarmonyPatch(typeof(Player))]

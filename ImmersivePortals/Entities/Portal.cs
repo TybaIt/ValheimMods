@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-
 namespace ImmersivePortals.Entities
 {
     public class Portal : MonoBehaviour {

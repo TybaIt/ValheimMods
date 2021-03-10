@@ -1,17 +1,15 @@
 ﻿using HarmonyLib;
-using ImmersivePortals.Entities;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using UnityEngine;
-
 namespace ImmersivePortals.Patches
 {
     [HarmonyPatch(typeof(TeleportWorld))]
     public static class TeleportWorldPatch
     {
-        //[HarmonyPatch("Update")]
-        //[HarmonyPrefix]
+        /*[HarmonyPatch("Update")]
+        [HarmonyPrefix]
         public static void AddPortalComponent(ref TeleportWorld __instance)
         {
             if (__instance.gameObject.GetComponentInChildren<Portal>() == null) {
@@ -50,7 +48,7 @@ namespace ImmersivePortals.Patches
                 portal.screen = renderTarget.GetComponent<MeshRenderer>();
                 portal.Initialize();
             }
-        }
+        }*/
 
         [HarmonyPatch("Teleport")]
         [HarmonyPrefix]

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-
 namespace ImmersivePortals.Entities
 {
     public class PortalCamera : MonoBehaviour

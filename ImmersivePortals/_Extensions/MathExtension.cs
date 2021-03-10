@@ -1,5 +1,4 @@
 ﻿using System;
-
 namespace ImmersivePortals
 {
     public static class MathExtension

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
-
 namespace ImmersivePortals.Patches
 {
     [HarmonyPatch(typeof(Character))]
@@ -16,7 +15,7 @@ namespace ImmersivePortals.Patches
                     new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), "IsTeleporting")))
                 .SetAndAdvance(OpCodes.Call, 
                     Transpilers.EmitDelegate<Func<Character, bool>>(player =>
-                        DateTimeOffset.Now.Subtract(PlayerPatch._lastTeleportTime).TotalSeconds < 0.25f || player.IsTeleporting()).operand)
+                        DateTimeOffset.Now.Subtract(PlayerPatch._lastTeleportTime).TotalSeconds < 0.5f || player.IsTeleporting()).operand)
                 .InstructionEnumeration();
         }
     }
