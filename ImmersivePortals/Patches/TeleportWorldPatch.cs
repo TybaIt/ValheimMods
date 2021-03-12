@@ -8,6 +8,8 @@ namespace ImmersivePortals.Patches
     [HarmonyPatch(typeof(TeleportWorld))]
     public static class TeleportWorldPatch
     {
+        internal static float lastTeleportDistance;
+
         /*[HarmonyPatch("Update")]
         [HarmonyPrefix]
         public static void AddPortalComponent(ref TeleportWorld __instance)
@@ -82,6 +84,8 @@ namespace ImmersivePortals.Patches
 
             var target = ZNetScene.instance.FindInstance(zdo)?.gameObject;
 
+            lastTeleportDistance = (instance.transform.position - pos).magnitude;
+
             if (target == null) {
                 // Fallback to original method.
                 return player.TeleportTo(pos, rot, distantTeleport);
@@ -98,15 +102,15 @@ namespace ImmersivePortals.Patches
             Vector3 a = targetTrigger.transform.rotation * Vector3.forward * 1.15f;
             var targetPos = targetTrigger.transform.position + a * instance.m_exitDistance + positionOffset;
 
-            if (!ZNetScene.instance.OutsideActiveArea(targetPos, player.transform.position)/*|| target.gameObject.activeSelf*/) {
-                // Portal is in the active area thus close enough for instant teleport.
+            if (ZNetScene.instance.IsAreaReady(targetPos)/*|| target.gameObject.activeSelf*/) {
+                // Portal is in a loaded area thus close enough for instant teleport.
 
                 if (player.IsTeleporting() || player.m_teleportCooldown < 0.1f ) {
                     return false;
                 }
 
                 // Teleport him!
-                PlayerPatch._lastTeleportTime = DateTime.Now;
+                PlayerPatch.SetLastTeleportTime(true);
                 player.m_teleporting = true; // May act as a lock for async routines.
                 player.m_maxAirAltitude = player.transform.position.y;
                 targetPos.y += 0.2f;

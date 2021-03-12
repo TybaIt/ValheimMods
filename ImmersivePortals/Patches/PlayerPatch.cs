@@ -9,7 +9,6 @@ namespace ImmersivePortals.Patches
     [HarmonyPatch(typeof(Player))]
     public static class PlayerPatch
     {
-        internal static DateTime _lastTeleportTime = DateTime.Now;
         private static bool hasTeleported;
 
         [HarmonyPatch("UpdateTeleport")]
@@ -17,10 +16,15 @@ namespace ImmersivePortals.Patches
         public static void DecreaseTeleportTime(ref float dt, ref Player __instance, ref float ___m_teleportTimer)
         {
             if (__instance.m_teleporting && (!ImmersivePortals.enablePortalBlackScreen.Value || 
-                 DateTimeOffset.Now.Subtract(_lastTeleportTime).TotalSeconds > Hud.instance.GetFadeDuration(__instance))) {
+                ImmersivePortals.context.teleportStopwatch.Elapsed.TotalSeconds > Hud.instance.GetFadeDuration(__instance))) {
 
                 dt *= ImmersivePortals.multiplyDeltaTimeBy.Value.Clamp(1, 10);
-                // Decreases the artificial minimum teleport duration.
+
+                if (___m_teleportTimer < 2f) {
+                    ___m_teleportTimer = 2f; // Jump to first branch in UpdateTeleport skipping initial frames.
+                }
+
+                // Decrease artificial minimum teleport duration.
                 ___m_teleportTimer *= (1f + ImmersivePortals.decreaseTeleportTimeByPercent.Value / 100f).Clamp(1f, 2f);
             }
         }
@@ -30,9 +34,10 @@ namespace ImmersivePortals.Patches
         public static void LogTeleportTime(ref bool ___m_teleporting) {
             if (hasTeleported && !___m_teleporting) {
                 hasTeleported = false;
-                var time = DateTimeOffset.Now.Subtract(_lastTeleportTime);
+                var time = ImmersivePortals.context.teleportStopwatch.Elapsed;
                 var timeString = $"{time.ToString("s\\.fff", CultureInfo.InvariantCulture)} second{(time.TotalSeconds < 2 ? "" : "s")}";
-                DebugUtil.LogInfo("Teleport took {0}", timeString);
+                var distanceString = $"{Math.Truncate(TeleportWorldPatch.lastTeleportDistance)} meter{(TeleportWorldPatch.lastTeleportDistance < 2 ? "" : "s")}";
+                DebugUtil.LogInfo("Teleported {0} in {1}", distanceString, timeString);
             }
         }
 
@@ -49,7 +54,7 @@ namespace ImmersivePortals.Patches
 
         private static bool IsAreaLoadedLazy(ZNetScene zNetScene, Vector3 targetPos)
         {
-            return DateTimeOffset.Now.Subtract(_lastTeleportTime).TotalSeconds >
+            return ImmersivePortals.context.teleportStopwatch.Elapsed.TotalSeconds >
                    ImmersivePortals.considerSceneLoadedSeconds.Value || zNetScene.IsAreaReady(targetPos);
         }
 
@@ -58,7 +63,7 @@ namespace ImmersivePortals.Patches
         public static void SetLastTeleportTime(bool __result)
         {
             if (__result) {
-                _lastTeleportTime = DateTime.Now;
+                ImmersivePortals.context.teleportStopwatch.Restart();
                 hasTeleported = true;
             }
         }

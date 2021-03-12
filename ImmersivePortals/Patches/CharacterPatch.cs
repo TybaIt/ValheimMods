@@ -14,8 +14,8 @@ namespace ImmersivePortals.Patches
             return new CodeMatcher(instructions).MatchForward(false,
                     new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), "IsTeleporting")))
                 .SetAndAdvance(OpCodes.Call, 
-                    Transpilers.EmitDelegate<Func<Character, bool>>(player =>
-                        DateTimeOffset.Now.Subtract(PlayerPatch._lastTeleportTime).TotalSeconds < 0.5f || player.IsTeleporting()).operand)
+                    Transpilers.EmitDelegate<Func<Character, bool>>(player => 
+                        ImmersivePortals.context.teleportStopwatch.Elapsed.TotalSeconds < 0.5f || player.IsTeleporting()).operand)
                 .InstructionEnumeration();
         }
     }
